@@ -8,6 +8,8 @@ import TestLayout from "./layout/TestLayout";
 import Test from "./pages/Test";
 import { AuthProvider } from "./auth/AuthContext";
 import ProtectedRoutes from "./auth/ProtectedRoutes";
+import MainLayout from "./layout/MainLayout";
+import AgentsForm from "./features/people & organizations/components/forms/AgentsForm";
 
 const App = () => {
   return (
@@ -23,7 +25,13 @@ const App = () => {
       <AuthProvider>
         <Routes>
           <Route element={<ProtectedRoutes />}>
-            <Route path="/test" element={<Test />} />
+            <Route element={<MainLayout />}>
+              <Route path="/test" element={<Test />} />
+              <Route path="/people-organizations">
+                <Route path="agents" element={<AgentsForm />} />
+                <Route index element={<Test />} />
+              </Route>
+            </Route>
           </Route>
           <Route element={<TestLayout />}>
             {/* <Route path='/books/*' element={<BookRoutes/>}/> */}
