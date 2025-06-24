@@ -1,6 +1,5 @@
 import authService from "@/features/authentication/services/authService";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -12,32 +11,28 @@ export const AuthProvider = ({ children }) => {
     setLoggedInUser(null);
     setLoading(false);
   };
-
   useEffect(() => {
     const initializeUser = async () => {
       try {
         const data = await authService.fetchMe();
-        if (data?.user) {
-          setLoggedInUser(data.user);
-        } else {
-          setLoggedInUser(null);
-        }
+        console.log("data after fetchMe: ", data);
+        setLoggedInUser(data?.user || null);
       } catch (error) {
         handleAuthError(error);
       } finally {
         setLoading(false);
       }
     };
-
     initializeUser();
   }, []);
 
   const login = async (email, password) => {
     try {
       const response = await authService.login({ email, password });
+      console.log("response: ", response);
       if (response?.user) {
         setLoggedInUser(response.user);
-        return true;
+        return { user: response.user, message: response.message };
       }
       throw new Error("Invalid credentials or response");
     } catch (error) {
@@ -45,22 +40,30 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
   };
-
   const logout = () => {
     setLoggedInUser(null);
-    authService.logout(); // Add token cleanup logic here
+    authService.logout();
   };
-
   const authContextValue = useMemo(
     () => ({
       loggedInUser,
       loading,
       login,
       logout,
+      refreshUser: async () => {
+        try {
+          setLoading(true);
+          const data = await authService.fetchMe();
+          setLoggedInUser(data?.user || null);
+        } catch (error) {
+          handleAuthError(error);
+        } finally {
+          setLoading(false);
+        }
+      },
     }),
     [loggedInUser, loading]
   );
-
   return (
     <AuthContext.Provider value={authContextValue}>
       {children}

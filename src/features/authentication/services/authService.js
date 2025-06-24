@@ -1,132 +1,107 @@
-import { getCookie } from '@/utils/cookieUtils';
-import axios from 'axios';
+import { deleteCookie, getCookie } from '@/utils/cookieUtils';
+import { getPaginationDefaults } from '@/utils/paginationUtils';
+import apiService from '../../../services/apiService';
 
-const API_BASE_URL = 'http://localhost:8080';
+const authService = {
 
-
-const authService = axios.create({
-    baseURL: API_BASE_URL,
-})
-
-const accessToken = getCookie('accessToken');
-
-
-authService.interceptors.request.use(
-    (config) => {
-        if (!config._retry && accessToken) {
-            console.log("accestToken" + accessToken);
-            config.headers["Authorization"] = `Bearer ${accessToken}`;
+    signup: async (credentials) => {
+        try {
+            const response = await apiService.post('/auth/signup', credentials);
+            return response.data
+        } catch (error) {
+            console.log(error);
+            throw error;
         }
-        return config;
     },
-    (error) => Promise.reject(error)
-);
-
-
-let refreshAttempted = false;
-const refreshAccessToken = async () => {
-    try {
-        const data = await authService.refreshToken();
-        if (!data.accessToken || data.refreshTokenError) {
-            throw new Error("Refresh token is invalid or expired.");
+    login: async (credentials) => {
+        try {
+            const response = await apiService.post('/auth/login', credentials, {
+                withCredentials: true
+            });
+            return response.data
+        } catch (error) {
+            console.log(error);
+            throw error;
         }
-        return data.accessToken;
-    } catch (error) {
-        throw new Error("Failed to refresh access token");
-    }
-};
-authService.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
+    },
+    test: async () => {
+        try {
+            const response = await apiService.get('/auth/test');
+            return response.data
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    },
+    refreshToken: async () => {
+        try {
+            const response = await apiService.post('auth/refresh-token', null, {
+                withCredentials: true
+            })
+            console.log("Refresh token response: ", response.data);
+            return response.data
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    },
+    fetchMe: async () => {
+        try {
+            const accessToken = getCookie('accessToken');
+            const headers = {};
 
-        // Handle 401: Unauthorized
-        if (error.response && error.response.status === 401) {
-            // Prevent infinite refresh attempts
-            if (refreshAttempted) {
-                // Log out the user or notify them that their session has expired
-                // logout();
-                return Promise.reject(error);
+            if (accessToken) {
+                headers["Authorization"] = `Bearer ${accessToken}`;
             }
 
-            refreshAttempted = true; // Set the flag to true to indicate we're attempting to refresh the token
-
-            try {
-                const accessToken = await refreshAccessToken();
-                originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
-                return authService(originalRequest); // Retry original request with new access token
-            } catch (refreshError) {
-                // logout(); // Log the user out if refresh fails
-                return Promise.reject(refreshError); // Reject with the refresh error
-            } finally {
-                refreshAttempted = false; // Reset flag after refresh attempt
-            }
+            const response = await apiService.get('auth/me', { headers });
+            return response.data;
+        } catch (error) {
+            console.log("Error fetching me: ", error);
+            console.error(error);
+            throw error;
         }
-
-        return Promise.reject(error); // Reject error for other scenarios
     }
-);
-
-
-
-
-
-authService.login = async (credentials) => {
-    try {
-        const response = await authService.post('/auth/login', credentials, {
-            withCredentials: true
-        });
-        return response.data
-    } catch (error) {
-        console.log(error);
-        throw error;
+    , sendPasswordResetEmail: async (userId, email) => {
+        try {
+            const response = await apiService.post('auth/request-password-reset', { userId, email })
+            return response.data
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
     }
-}
-
-authService.test = async () => {
-    try {
-        const response = await authService.get('/auth/test');
-        return response.data
-    } catch (error) {
-        console.log(error);
-        throw error;
+    , verifyPasswordResetToken: async (resetPasswordToken) => {
+        try {
+            const response = await apiService.get(`auth/verify-password-reset-token/${resetPasswordToken}`);
+            return response.data;
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
     }
-}
-authService.getUsers = async () => {
-    try {
-        const response = await authService.get('/users');
-        return response.data;
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
-
-authService.refreshToken = async () => {
-    try {
-        const response = await authService.post('auth/refresh-token', null, {
-            withCredentials: true
-        })
-        return response.data
-    } catch (error) {
-        console.log(error);
-        throw error;
-    }
-}
-authService.fetchMe = async () => {
-    let headers = {};
-
-    if (accessToken) {
-        headers["Authorization"] = `Bearer ${accessToken}`;
+    , resetPassword: async (resetPasswordToken, newPassword) => {
+        try {
+            const response = await apiService.post(`auth/reset-password/${resetPasswordToken}`, { newPassword });
+            return response.data;
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    },
+    logout: async () => {
+        try {
+            const response = await apiService.post('auth/logout', null, {
+                withCredentials: true
+            });
+            deleteCookie('accessToken');
+            deleteCookie('refreshToken');
+            return response.data;
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
     }
 
-    try {
-        const response = await authService.get('auth/me', { headers });
-        return response.data;
-    } catch (error) {
-        console.error(error);
-        throw error;
-    }
 };
-
 export default authService;

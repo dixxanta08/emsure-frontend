@@ -1,36 +1,16 @@
-import AppTable from "@/components/app-table";
-import authService from "@/features/authentication/services/authService";
+import AppDataTable from "@/components/app-data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
 import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
+import { PlusIcon } from "lucide-react";
+import SearchBar from "@/components/app-searchbar";
+import { DataTablePagination } from "@/components/app-pagination";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import agentService from "@/features/authentication/services/agentService";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -48,296 +28,173 @@ const formSchema = z.object({
 const Agents = () => {
   const columns = [
     {
-      name: "userId",
-      headerName: "UserId",
-      headerClassName: "w-[100px] ",
-      cellClassName: "",
+      accessorKey: "userId",
+      header: "UserId",
     },
     {
-      name: "name",
-      headerName: "Name",
+      accessorKey: "name",
+      header: "Name",
     },
     {
-      name: "phoneNumber",
-      headerName: "Phone Number",
+      accessorKey: "phoneNumber",
+      header: "Phone Number",
     },
     {
-      name: "email",
-      headerName: "Email",
+      accessorKey: "email",
+      header: "Email",
     },
     {
-      name: "actions",
-      headerName: "Actions",
-      render: (row) => <Button variant="link">View Companies</Button>,
+      accessorKey: "licenseNumber",
+      header: "License Number",
     },
+    // {
+    //   accessorKey: "actions",
+    //   header: "Actions",
+    //   cell: ({ row }) => {
+    //     return (
+    //       <Button variant="link" onClick={() => {}}>
+    //         View Companies
+    //       </Button>
+    //     );
+    //   },
+    // },
   ];
 
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [totalRows, setTotalRows] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
+  const handlePageChange = (newPageIndex) => {
+    console.log(newPageIndex);
+    setPageIndex(newPageIndex);
+  };
+  const handlePageSizeChange = (newPageSize) => {
+    console.log(newPageSize);
+    setPageSize(newPageSize);
+  };
 
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phoneNumber: "",
-      licenseNumber: "",
-      licenseExpirationDate: "",
-      contractStartDate: "",
-      contractEndDate: "",
-      isActive: false,
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isActiveTab, setIsActiveTab] = useState("active");
+
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data, error, isLoading, isFetching, isPending } = useQuery({
+    queryKey: ["agents", pageIndex, pageSize, searchTerm, isActiveTab],
+    queryFn: async () => {
+      const data = await agentService.getAgents(
+        pageIndex,
+        pageSize,
+        searchTerm,
+        isActiveTab
+      );
+      return data;
     },
+    retry: false,
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await authService.getUsers();
-        setData(data.users);
-      } catch (error) {
-        console.log(error); // this returns axios error
-        console.log(error.message); // this returns the error message
-        setError("An error occurred. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    if (data) {
+      setTotalRows(data.pagination.totalItems);
+      setPageIndex(data.pagination.pageIndex); // 0-based index
+      setPageSize(data.pagination.pageSize);
+    }
+  }, [data, queryClient, pageIndex, pageSize, searchTerm, isActiveTab]);
+
+  const handleSearch = (searchTerm) => {
+    setSearchTerm(searchTerm);
+  };
 
   const handleRowClick = (row) => {
-    console.log(row);
-    setSelectedRow(row);
-    form.reset(row);
-    setIsDialogOpen(true);
+    navigate(`${row.agentId}/details`);
   };
 
-  const onSubmit = (formData) => {
-    console.log("submitted: ", formData);
-  };
   return (
     <div className="p-8 bg-white">
       <div className="flex items-center justify-between">
         <h1 className="font-semibold text-lg text-gray-800">Agents</h1>
-        <Button
-          variant="outline"
-          onClick={() => {
-            setIsDialogOpen(true);
-            setSelectedRow(null);
-            form.reset({
-              defaultValues: {
-                name: "",
-                email: "",
-                phoneNumber: "",
-                licenseNumber: "",
-                licenseExpirationDate: "",
-                contractStartDate: "",
-                contractEndDate: "",
-                isActive: false,
-              },
-            });
-          }}
-        >
-          Add Agent
-        </Button>
       </div>
       <div className="bg-white p-4 mt-4  rounded-md ">
         <Tabs
           defaultValue="active"
           className="w-full"
-          onValueChange={(value) => console.log(value)}
+          onValueChange={(value) => setIsActiveTab(value)}
         >
           <TabsList>
             <TabsTrigger value="active">Active</TabsTrigger>
             <TabsTrigger value="inactive">Inactive</TabsTrigger>
           </TabsList>
           <TabsContent value="active">
-            <AppTable
+            <div className="flex items-center justify-between">
+              <div className="w-1/3 mt-8 mb-4 ">
+                <SearchBar onSearchClick={handleSearch} />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  navigate("new/details");
+                }}
+              >
+                <PlusIcon className="h-4 w-4 " />
+                Add Agent
+              </Button>
+            </div>
+
+            <AppDataTable
               rowIdKey="userId"
               columns={columns}
-              data={data}
-              loading={loading}
+              data={data?.agents}
+              loading={isPending}
               error={error}
-              onRowClick={handleRowClick} // log the row values on click
+              onRowClick={handleRowClick}
             />
+
+            <div className="mt-8">
+              <DataTablePagination
+                totalRows={totalRows}
+                pageIndex={pageIndex}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </div>
           </TabsContent>
           <TabsContent value="inactive">
-            <AppTable
+            <div className="flex items-center justify-between">
+              <div className="w-1/3 mt-8 mb-4 ">
+                <SearchBar onSearchClick={handleSearch} />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  navigate("new/details");
+                }}
+              >
+                <PlusIcon className="h-4 w-4 " />
+                Add Agent
+              </Button>
+            </div>
+
+            <AppDataTable
               rowIdKey="userId"
               columns={columns}
-              data={data}
-              loading={loading}
+              data={data?.agents}
+              loading={isPending}
               error={error}
+              onRowClick={handleRowClick}
             />
+            <div className="mt-8">
+              <DataTablePagination
+                totalRows={totalRows}
+                pageIndex={pageIndex}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] md:min-w-[600px]">
-          <Form {...form} orientation="vertical">
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-8  "
-            >
-              <DialogHeader>
-                <DialogTitle>Edit Agent Profile</DialogTitle>
-                <DialogDescription>
-                  Make changes to your profile here. Click save when you're
-                  done.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4 gap-x-8">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phoneNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Phone Number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="licenseNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>License Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="License Number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="licenseExpirationDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>License Expiration Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          placeholder="License Expiration Date"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="contractStartDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contract Start Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          placeholder="Contract Start Date"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="contractEndDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contract End Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          placeholder="Contract End Date"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <FormControl>
-                        <div className=" flex items-center h-10">
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                          <span className="ml-2">
-                            {field.value ? `Active` : `Inactive`}
-                          </span>
-                        </div>
-                        {/* <Input placeholder="License Number" {...field} /> */}
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              {/* <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input id="name" value="Pedro Duarte" className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="username" className="text-right">
-                Username
-              </Label>
-              <Input id="username" value="@peduarte" className="col-span-3" />
-            </div>
-          </div> */}
-              <DialogFooter>
-                <Button type="submit">Save changes</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

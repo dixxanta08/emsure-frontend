@@ -60,7 +60,7 @@ const DialogForm = ({
                   key={index}
                   control={form.control}
                   name={field.name}
-                  render={({ field: formField }) => (
+                  render={({ field: formField, fieldState }) => (
                     <FormItem>
                       <FormLabel>{field.label}</FormLabel>
                       <FormControl>
@@ -89,13 +89,13 @@ const DialogForm = ({
                             ))}
                           </select>
                         ) : field.type === "date" ? (
-                          <input
+                          <Input
                             type="date"
                             {...formField}
                             placeholder={field.placeholder}
                           />
                         ) : field.type === "number" ? (
-                          <input
+                          <Input
                             type="number"
                             {...formField}
                             placeholder={field.placeholder}
@@ -109,7 +109,11 @@ const DialogForm = ({
                         )}
                       </FormControl>
 
-                      <FormMessage />
+                      <FormMessage>
+                        <span className="text-red-500 text-xs mt-0">
+                          {fieldState.error?.message || "hi"}
+                        </span>
+                      </FormMessage>
                     </FormItem>
                   )}
                 />

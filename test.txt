@@ -1,0 +1,190 @@
+EMSure Test Requirements
+=====================
+
+1. Authentication Pages
+----------------------
+- Login Page
+  * Email validation (correct format, required field)
+  * Password validation (required field, minimum length)
+  * Error handling for incorrect credentials
+  * Remember me functionality
+  * Forgot password link functionality
+
+- Register Page
+  * Form validation for all required fields
+  * Email format validation
+  * Password strength requirements
+  * Password confirmation matching
+  * Terms and conditions acceptance
+
+- Forgot Password Page
+  * Email validation
+  * Success message on valid email submission
+  * Error handling for invalid email
+
+- Reset Password Page
+  * Password validation
+  * Password confirmation matching
+  * Token validation
+  * Success/error message handling
+
+2. Dashboard Pages
+-----------------
+- Admin Dashboard
+  * Data loading and display
+  * Navigation to different sections
+  * Summary statistics accuracy
+
+- Agent Dashboard
+  * Agent-specific data display
+  * Navigation functionality
+  * Performance metrics accuracy
+
+- Company Dashboard
+  * Company information display
+  * Employee list visibility
+  * Plan subscription details
+
+- Employee Dashboard
+  * Personal information display
+  * Benefits and coverage details
+  * Claims history
+
+3. People & Organizations
+-------------------------
+- Agents Management
+  * List view functionality
+  * Agent details view
+  * Add/Edit agent forms
+  * Search and filter functionality
+
+- Companies Management
+  * Company listing
+  * Company details view
+  * Company form validation
+  * Employee association
+
+- Employees Management
+  * Employee listing
+  * Employee details view
+  * Employee form validation
+  * Company association
+
+- Insurance Workers Management
+  * Worker listing
+  * Worker details view
+  * Form validation
+  * Role assignment
+
+4. Insurance Management
+----------------------
+- Benefits Management
+  * Benefits listing
+  * Benefit details view
+  * Add/Edit benefit forms
+  * Validation rules
+
+- Benefit Types
+  * Type listing
+  * Type details
+  * Form validation
+
+- Medical Facilities
+  * Facility listing
+  * Facility details view
+  * Add/Edit facility forms
+  * Location validation
+
+- Policies Management
+  * Policy listing
+  * Policy details view
+  * Policy form validation
+  * Coverage details
+
+- Plans Management
+  * Plan listing
+  * Plan details view
+  * Plan form validation
+  * Pricing information
+
+5. Client Portal
+---------------
+- Explore Plans
+  * Plan listing
+  * Plan comparison
+  * Filter and search functionality
+
+- Company Management
+  * Company profile
+  * Employee management
+  * Plan subscription
+
+- Claims Management
+  * Claim submission
+  * Claim status tracking
+  * Document upload
+  * Claim details view
+
+- Payment Processing
+  * Payment form validation
+  * Success/failure handling
+  * Payment history
+  * Receipt generation
+
+6. Subscription Management
+-------------------------
+- Claims Processing
+  * Claim review
+  * Status updates
+  * Document verification
+  * Payment processing
+
+- Plan Subscriptions
+  * Subscription details
+  * Renewal processing
+  * Cancellation handling
+
+- Payments Management
+  * Payment tracking
+  * Payment status updates
+  * Payment history
+
+7. Profile Management
+--------------------
+- Profile Page
+  * Personal information display
+  * Information update functionality
+  * Password change
+  * Profile picture upload
+
+8. Error Handling
+-----------------
+- Error Page
+  * 404 Not Found
+  * 403 Forbidden
+  * 500 Server Error
+  * Error message display
+  * Navigation options
+
+9. General UI/UX Tests
+---------------------
+- Responsive Design
+  * Mobile view
+  * Tablet view
+  * Desktop view
+
+- Navigation
+  * Menu functionality
+  * Breadcrumb navigation
+  * Back button behavior
+
+- Loading States
+  * Loading indicators
+  * Skeleton screens
+  * Error states
+
+- Form Validation
+  * Required fields
+  * Format validation
+  * Error messages
+  * Success messages 
