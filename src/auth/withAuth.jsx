@@ -5,7 +5,6 @@ import { useAuth } from "./AuthContext";
 const withAuth = (WrappedComponent) => {
   return (props) => {
     const { isAuthenticated } = useAuth();
-    console.log(isAuthenticated + " from withAuth");
     if (!isAuthenticated) {
       return <Navigate to="/login" />;
     }
